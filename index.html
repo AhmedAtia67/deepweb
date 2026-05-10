@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>☠️ DARK MARKET v2.0</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Cairo:wght@400;700;900&display=swap');
+
+:root {
+  --red: #ff0033;
+  --green: #00ff41;
+  --bg: #050505;
+  --bg2: #0d0d0d;
+  --bg3: #111;
+  --border: #1a1a1a;
+  --text: #ccc;
+  --dim: #555;
+}
+#jumpscare{
+  position:fixed;
+  inset:0;
+
+  background:#000;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  z-index:99999;
+
+  opacity:0;
+  pointer-events:none;
+
+  transition:opacity 0.2s;
+}
+
+#jumpscare img{
+  width:100%;
+  height:100%;
+
+  object-fit:cover;
+}
+
+#jumpscare.show{
+  opacity:1;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--green);
+  font-family: 'Share Tech Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* scanlines effect */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,65,0.015) 2px, rgba(0,255,65,0.015) 4px);
+  pointer-events:none;
+  z-index:999;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  background: #000;
+  border-bottom: 1px solid var(--red);
+  padding: 6px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--dim);
+}
+
+.topbar .blink { color: var(--red); animation: blink 1s step-end infinite; }
+@keyframes blink { 50% { opacity:0; } }
+
+/* ── HEADER ── */
+header {
+  background: var(--bg2);
+  border-bottom: 2px solid var(--red);
+  padding: 24px 20px 18px;
+  text-align: center;
+  position: relative;
+}
+
+.skull { font-size: 2.5rem; display:block; margin-bottom: 8px; filter: drop-shadow(0 0 10px #ff003388); }
+
+header h1 {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 2rem;
+  color: var(--red);
+  text-shadow: 0 0 20px #ff003399, 0 0 40px #ff003344;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+}
+
+header .tagline {
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: 3px;
+  margin-top: 4px;
+}
+
+.warning-strip {
+  background: var(--red);
+  color: #000;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-align: center;
+  padding: 4px;
+  animation: pulse-bg 2s ease-in-out infinite;
+}
+@keyframes pulse-bg { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+/* ── NAV ── */
+nav {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  overflow-x: auto;
+  padding: 0 10px;
+}
+
+nav a {
+  color: var(--dim);
+  text-decoration: none;
+  font-size: 12px;
+  padding: 12px 16px;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+nav a:hover, nav a.active {
+  color: var(--green);
+  border-bottom-color: var(--green);
+}
+
+nav a.danger { color: #ff4444; }
+nav a.danger:hover { color: var(--red); border-bottom-color: var(--red); }
+
+/* ── MAIN LAYOUT ── */
+.layout{
+  display:grid;
+
+  grid-template-columns:
+    180px
+    minmax(0,1fr)
+    180px;
+
+  width:100%;
+}
+.content,
+.cards,
+.card{
+  min-width:0;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  padding: 16px 12px;
+}
+
+.sidebar h3 {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--red);
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text);
+  transition: background 0.15s;
+}
+
+.filter-item:hover { background: #1a0000; color: var(--red); }
+.filter-item.active { background: #1a0000; color: var(--red); }
+
+.filter-count {
+  margin-right: auto;
+  background: #1a1a1a;
+  color: var(--dim);
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 10px;
+}
+
+.online-box {
+  margin-top: 20px;
+  background: #0a1a0a;
+  border: 1px solid #1a4a1a;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.online-box .label { font-size: 9px; letter-spacing:2px; color:var(--dim); margin-bottom:6px; }
+.online-num { font-size: 1.4rem; color: var(--green); text-shadow: 0 0 10px #00ff4166; }
+.online-sub { font-size: 10px; color: var(--dim); }
+
+/* ── CONTENT ── */
+.content{
+  padding:16px;
+  width:100%;
+  overflow:hidden;
+}
+
+.section-title {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--dim);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-title::after {
+  content:'';
+  flex:1;
+  height:1px;
+  background: var(--border);
+}
+
+/* ── CARDS ── */
+.cards{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+
+  width:100%;
+}
+
+.card{
+  width:100%;
+  min-width:0;
+
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:6px;
+
+  overflow:hidden;
+}
+
+.card:hover { border-color: var(--red); transform: translateY(-2px); }
+.card.featured { border-color: #ff003355; }
+
+.card-img{
+  width:100%;
+  height:180px;
+
+  overflow:hidden;
+  position:relative;
+
+  background:#111;
+}
+
+.card-img img{
+  width:100%;
+  height:100%;
+
+  object-fit:cover;
+  display:block;
+}
+.badge {
+  position:absolute;
+  top:8px;
+  right:8px;
+  font-size: 9px;
+  font-family: 'Share Tech Mono';
+  padding: 3px 8px;
+  border-radius: 3px;
+  letter-spacing: 1px;
+}
+
+.badge.verified { background: #003300; color: #00ff41; border: 1px solid #00ff4144; }
+.badge.top { background: #330000; color: #ff3333; border: 1px solid #ff333344; }
+.badge.new { background: #332200; color: #ffaa00; border: 1px solid #ffaa0044; }
+
+.card-body { padding: 10px 12px; }
+
+.card-name {
+  font-size: 13px;
+  color: #eee;
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-name .rating { color: var(--red); font-size: 11px; }
+
+.card-spec {
+  font-size: 10px;
+  color: var(--dim);
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.card-price {
+  color: var(--green);
+  font-size: 1rem;
+  margin-bottom: 8px;
+  text-shadow: 0 0 8px #00ff4133;
+}
+
+.card-price .currency { font-size: 11px; color: var(--dim); }
+
+.card-footer {
+  display: flex;
+  gap: 6px;
+}
+
+.btn {
+  flex:1;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.15s;
+}
+
+.btn-hire {
+  background: var(--red);
+  color: #fff;
+  text-shadow: none;
+}
+.btn-hire:hover { background: #cc0022; }
+
+.btn-view {
+  background: transparent;
+  color: var(--green);
+  border: 1px solid #00ff4133;
+}
+.btn-view:hover { background: #001a00; }
+
+/* ── TICKER ── */
+.ticker-wrap {
+  background: #000;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  padding: 6px 0;
+  margin-bottom: 16px;
+}
+
+.ticker {
+  display: flex;
+  gap: 40px;
+  animation: scroll-ticker 25s linear infinite;
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+.ticker span { color: var(--dim); }
+.ticker span b { color: var(--red); }
+.ticker span.ok b { color: var(--green); }
+
+@keyframes scroll-ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ── RIGHT SIDEBAR ── */
+.right-sidebar {
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  padding: 16px 12px;
+}
+
+.right-sidebar h3 {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--red);
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.activity-item {
+  font-size: 10px;
+  color: var(--dim);
+  padding: 6px 0;
+  border-bottom: 1px solid #111;
+  line-height: 1.5;
+}
+.activity-item b { color: var(--green); }
+.activity-item .time { color: #333; font-size: 9px; display:block; margin-top:2px; }
+
+/* ── MODAL ── */
+#modal-overlay {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:#000000cc;
+  z-index:1000;
+  align-items:center;
+  justify-content:center;
+}
+#modal-overlay.show { display:flex; }
+
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--red);
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 360px;
+  width: 90%;
+  box-shadow: 0 0 40px #ff003333;
+}
+
+.modal h2 {
+  color: var(--red);
+  font-size: 1rem;
+  letter-spacing: 3px;
+  margin-bottom: 16px;
+  text-align:center;
+}
+
+.modal-field {
+  margin-bottom: 12px;
+}
+
+.modal-field label {
+  display:block;
+  font-size:10px;
+  color:var(--dim);
+  letter-spacing:2px;
+  margin-bottom:4px;
+}
+
+.modal-field input, .modal-field select, .modal-field textarea {
+  width:100%;
+  background:#0a0a0a;
+  border:1px solid #222;
+  border-radius:4px;
+  color:var(--green);
+  font-family:'Share Tech Mono',monospace;
+  font-size:12px;
+  padding:8px 10px;
+  outline:none;
+  transition:border-color 0.2s;
+}
+
+.modal-field input:focus, .modal-field select:focus { border-color: var(--red); }
+.modal-field textarea { resize:none; height:70px; }
+.modal-field select option { background:#111; }
+
+.modal-btns { display:flex; gap:8px; margin-top:16px; }
+
+.modal-btn {
+  flex:1;
+  padding:10px;
+  border:none;
+  border-radius:4px;
+  font-family:'Share Tech Mono';
+  font-size:12px;
+  letter-spacing:2px;
+  cursor:pointer;
+  transition:all 0.15s;
+}
+
+.modal-btn.confirm { background:var(--red); color:#fff; }
+.modal-btn.confirm:hover { background:#cc0022; }
+.modal-btn.cancel { background:transparent; color:var(--dim); border:1px solid #222; }
+.modal-btn.cancel:hover { color:#fff; }
+
+/* ── SUCCESS TOAST ── */
+#toast {
+  position:fixed;
+  bottom:24px;
+  left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:#003300;
+  border:1px solid var(--green);
+  color:var(--green);
+  font-size:12px;
+  letter-spacing:2px;
+  padding:10px 24px;
+  border-radius:6px;
+  transition:transform 0.3s;
+  z-index:2000;
+  text-align:center;
+}
+#toast.show { transform:translateX(-50%) translateY(0); }
+
+/* ── FOOTER ── */
+footer {
+  background:#000;
+  border-top:1px solid var(--border);
+  padding:12px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:10px;
+  color:var(--dim);
+}
+</style>
+</head>
+
+<body>
+
+<!-- TOP STATUS BAR -->
+<div class="topbar">
+  <span>TOR: <span class="blink">● CONNECTED</span></span>
+  <span>ENCRYPTION: AES-256-GCM</span>
+  <span>NODE: EU-DARK-7</span>
+  <span>⚠️ هذا الموقع حقيقي مئه بالمئه </span>
+</div>
+
+<!-- HEADER -->
+<header>
+  <span class="skull">☠️</span>
+  <h1>DARK MARKET</h1>
+  <div class="tagline">// PREMIUM SERVICES — VERIFIED PROFESSIONALS //</div>
+</header>
+
+<div class="warning-strip">كن حذر من الافضل لك ان توصل لهم المال كامل 😜</div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="active">🏠 HOME</a>
+  <a href="#">🔪 HITMEN</a>
+  <a href="#">💀 ASSASSINS</a>
+  <a href="#">🕵️ SPIES</a>
+  <a href="#">💣 DEMOLITION</a>
+  <a href="#">⭐ TOP RATED</a>
+  <a href="#" class="danger" onclick="openModal('EMERGENCY'); return false;">🚨 EMERGENCY</a>
+</nav>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <div class="sidebar">
+    <h3>// FILTER //</h3>
+
+    <div class="filter-item active" onclick="toggleFilter(this)">
+      🌍 الكل <span class="filter-count">24</span>
+    </div>
+    <div class="filter-item" onclick="toggleFilter(this)">
+      🔫 قناص <span class="filter-count">6</span>
+    </div>
+    <div class="filter-item" onclick="toggleFilter(this)">
+      🗡️ اغتيال <span class="filter-count">8</span>
+    </div>
+    <div class="filter-item" onclick="toggleFilter(this)">
+      💊 تسميم <span class="filter-count">4</span>
+    </div>
+    <div class="filter-item" onclick="toggleFilter(this)">
+      🎭 تنكر <span class="filter-count">6</span>
+    </div>
+
+    <h3 style="margin-top:20px">// PRICE //</h3>
+    <div class="filter-item" onclick="toggleFilter(this)">
+      💰 أقل من 5 BTC <span class="filter-count">9</span>
+    </div>
+    <div class="filter-item" onclick="toggleFilter(this)">
+      💎 5–20 BTC <span class="filter-count">11</span>
+    </div>
+    <div class="filter-item" onclick="toggleFilter(this)">
+      👑 +20 BTC <span class="filter-count">4</span>
+    </div>
+
+    <div class="online-box">
+      <div class="label">// ONLINE NOW //</div>
+      <div class="online-num" id="onlineCount">847</div>
+      <div class="online-sub">عميل نشط</div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="content">
+
+    <!-- TICKER -->
+    <div class="ticker-wrap">
+      <div class="ticker">
+        <span><b>Ghost_77</b> أكمل مهمة ★★★★★</span>
+        <span class="ok"><b>تقييم جديد:</b> "محترف جداً" +5 BTC</span>
+        <span><b>تحذير:</b> تحقق من الهوية قبل الدفع</span>
+        <span class="ok"><b>Shadow_X</b> متاح الآن</span>
+        <span><b>عرض محدود:</b> خصم 20% لأول مهمة</span>
+        <span class="ok"><b>Viper</b> عاد من مهمة ناجحة</span>
+        <span><b>Ghost_77</b> أكمل مهمة ★★★★★</span>
+        <span class="ok"><b>تقييم جديد:</b> "محترف جداً" +5 BTC</span>
+        <span><b>Shadow_X</b> متاح الآن</span>
+        <span class="ok"><b>Viper</b> عاد من مهمة ناجحة</span>
+        <span><b>انتبااااااااااااه</b> السيسي اذا لم يصله جزء من الارباح فانت المسؤول عن نفسك</span>
+        <span><b>عرض محدود:</b> اشتري امهر هكر في العالم "اسماعيل مان" ب 106 دينار جزائري فقط</span>
+
+      </div>
+    </div>
+    <!-- JUMPSCARE -->
+<div id="jumpscare">
+  <img src="images/scary.jpg" alt="scary">
+  <audio id="scareSound" preload="auto">
+  <source src="sounds/scare.mp3" type="audio/mpeg">
+</audio>
+</div>
+
+    <div class="section-title">// FEATURED PROFESSIONALS //</div>
+
+    <div class="cards">
+
+      <!-- CARD 1 -->
+      <div class="card featured">
+        <div class="card-img">
+        <img src="images/ghost4.jpg" alt="Ghost">
+          <span class="badge top">⭐ TOP 1</span>
+        </div>
+        <div class="card-body">
+          <div class="card-name">
+            Ghost_77
+            <span class="rating">★★★★★ (412)</span>
+          </div>
+          <div class="card-spec">
+            تخصص: قناصة / اختفاء/ لعب القمار<br>
+            خبرة: 12 سنة<br>
+            نجاح: 99.7%
+          </div>
+          <div class="card-price">8.5 BTC <span class="currency">/ مهمة</span></div>
+          <div class="card-footer">
+            <button class="btn btn-view">عرض</button>
+            <button class="btn btn-hire" onclick="openModal('Ghost_77')">استئجار</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 2 -->
+      <div class="card">
+        <div class="card-img">
+            <img src="images/shadow4.jpg" alt="Shadow_X">
+          <span class="badge verified">✓ VERIFIED</span>
+        </div>
+        <div class="card-body">
+          <div class="card-name">
+            Shadow_X
+            <span class="rating">★★★★☆ (287)</span>
+          </div>
+          <div class="card-spec">
+            تخصص: تنكر / تسلل<br>
+            خبرة: 8 سنين<br>
+            نجاح: 97.2%
+          </div>
+          <div class="card-price">5.2 BTC <span class="currency">/ مهمة</span></div>
+          <div class="card-footer">
+            <button class="btn btn-view">عرض</button>
+            <button class="btn btn-hire" onclick="openModal('Shadow_X')">استئجار</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 3 -->
+      <div class="card">
+        <div class="card-img">
+          <img src="images/viper.jpg" alt="Viper">
+          <span class="badge verified">✓ VERIFIED</span>
+        </div>
+        <div class="card-body">
+          <div class="card-name">
+            Viper
+            <span class="rating">★★★★★ (193)</span>
+          </div>
+          <div class="card-spec">
+            تخصص: تسميم / كيمياء<br>
+            خبرة: 6 سنين<br>
+            نجاح: 98.1%
+          </div>
+          <div class="card-price">6.8 BTC <span class="currency">/ مهمة</span></div>
+          <div class="card-footer">
+            <button class="btn btn-view">عرض</button>
+            <button class="btn btn-hire" onclick="openModal('Viper')">استئجار</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 4 -->
+      <div class="card">
+        <div class="card-img">
+          <img src="images/phantom.jpg" alt="Phantom_K">
+          <span class="badge new">★ NEW</span>
+        </div>
+        <div class="card-body">
+          <div class="card-name">
+            Phantom_K
+            <span class="rating">★★★★☆ (44)</span>
+          </div>
+          <div class="card-spec">
+            تخصص: تنكر / اغتيال<br>
+            خبرة: 3 سنين<br>
+            نجاح: 95.5%
+          </div>
+          <div class="card-price">3.1 BTC <span class="currency">/ مهمة</span></div>
+          <div class="card-footer">
+            <button class="btn btn-view">عرض</button>
+            <button class="btn btn-hire" onclick="openModal('Phantom_K')">استئجار</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /cards -->
+
+    <!-- PLACEHOLDER for user images -->
+    <div class="section-title">// ADD YOUR OWN LISTINGS //</div>
+    <div style="border:1px dashed #222; border-radius:6px; padding:24px; text-align:center; color:#333; font-size:12px;">
+      📁 هنا هتحط صورك وبياناتك للعناصر الجديدة<br>
+      <span style="font-size:10px;color:#222;margin-top:8px;display:block;">(ارفع الصور وعدّل الكروت فوق)</span>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- RIGHT SIDEBAR -->
+  <div class="right-sidebar">
+    <h3>// LIVE FEED //</h3>
+
+    <div class="activity-item">
+      <b>Ghost_77</b> قبل مهمة جديدة
+      <span class="time">منذ 3 دقائق</span>
+    </div>
+    <div class="activity-item">
+      مستخدم <b>***XK2</b> أتم الدفع
+      <span class="time">منذ 7 دقائق</span>
+    </div>
+    <div class="activity-item">
+      <b>Viper</b> أكمل مهمة بنجاح
+      <span class="time">منذ 14 دقيقة</span>
+    </div>
+    <div class="activity-item">
+      مستخدم <b>***9QP</b> ترك تقييم ★★★★★
+      <span class="time">منذ 22 دقيقة</span>
+    </div>
+    <div class="activity-item">
+      <b>Shadow_X</b> أصبح متاحاً
+      <span class="time">منذ 31 دقيقة</span>
+    </div>
+    <div class="activity-item">
+      مستخدم جديد انضم للشبكة
+      <span class="time">منذ 45 دقيقة</span>
+    </div>
+    <div class="activity-item">
+      <b>Phantom_K</b> قبل مهمته الأولى
+      <span class="time">منذ ساعة</span>
+    </div>
+
+    <div style="margin-top:20px; background:#0a0a0a; border:1px solid #1a1a1a; border-radius:6px; padding:10px;">
+      <div style="font-size:9px;letter-spacing:2px;color:#333;margin-bottom:8px;">// SECURE CHAT //</div>
+      <input
+        type="text"
+        placeholder="رسالة مشفرة..."
+        style="width:100%;background:#000;border:1px solid #222;border-radius:4px;color:#00ff41;font-family:'Share Tech Mono';font-size:11px;padding:6px 8px;outline:none;"
+      >
+      <button onclick="fakeChat()" style="width:100%;margin-top:6px;padding:6px;background:transparent;border:1px solid #222;border-radius:4px;color:#555;font-family:'Share Tech Mono';font-size:10px;cursor:pointer;letter-spacing:2px;">SEND ENCRYPTED</button>
+    </div>
+  </div>
+
+</div><!-- /layout -->
+
+<!-- FOOTER -->
+<footer>
+  <span>☠️ DARK MARKET v2.0</span>
+  <span>⚠️ هذا الموقع هزلي بالكامل — لأغراض ترفيهية فقط 😂</span>
+  <span>TOR NODE: EU-DARK-7 | PING: 12ms</span>
+</footer>
+
+<!-- MODAL -->
+<div id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <h2>// HIRE REQUEST //</h2>
+    <div class="modal-field">
+      <label>CONTRACTOR</label>
+      <input type="text" id="modal-name" readonly>
+    </div>
+    <div class="modal-field">
+      <label>MISSION TYPE</label>
+      <select>
+        <option>اغتيال هادئ</option>
+        <option>اختفاء</option>
+        <option>تحذير فقط</option>
+        <option>مراقبة</option>
+        <option>تسليم رسالة... بالقوة</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <label>LOCATION</label>
+      <input type="text" placeholder="المدينة / الدولة">
+    </div>
+    <div class="modal-field">
+      <label>NOTES</label>
+      <textarea placeholder="تفاصيل إضافية..."></textarea>
+    </div>
+    <div class="modal-field">
+      <label>PAYMENT (BTC)</label>
+      <input type="text" placeholder="0.00 BTC">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeModalBtn()">CANCEL</button>
+      <button class="modal-btn confirm" onclick="confirmHire()">CONFIRM ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">✓ REQUEST SENT — ENCRYPTED ✓</div>
+
+<script>
+function openModal(name) {
+  document.getElementById('modal-name').value = name;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal-overlay'))
+    document.getElementById('modal-overlay').classList.remove('show');
+}
+
+function closeModalBtn() {
+  document.getElementById('modal-overlay').classList.remove('show');
+}
+
+function confirmHire() {
+  document.getElementById('modal-overlay').classList.remove('show');
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 3000);
+}
+
+function toggleFilter(el) {
+  document.querySelectorAll('.filter-item').forEach(f => f.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function fakeChat() {
+  const t = document.getElementById('toast');
+  t.textContent = '🔒 MESSAGE ENCRYPTED & SENT';
+  t.classList.add('show');
+  setTimeout(()=> { t.classList.remove('show'); t.textContent = '✓ REQUEST SENT — ENCRYPTED ✓'; }, 2500);
+}
+
+// fake live online counter
+setInterval(() => {
+  const el = document.getElementById('onlineCount');
+  const current = parseInt(el.textContent);
+  const delta = Math.floor(Math.random()*5) - 2;
+  el.textContent = Math.max(800, current + delta);
+}, 3000);
+const jumpscare = document.getElementById("jumpscare");
+
+function showJumpscare(){
+  jumpscare.classList.add("show");
+
+  scareSound.currentTime = 0;
+  scareSound.play();
+
+  setTimeout(() => {
+    jumpscare.classList.remove("show");
+  }, 1000);
+}
+
+setInterval(showJumpscare, 30000);
+
+  jumpscare.classList.add("show");
+
+  setTimeout(() => {
+    jumpscare.classList.remove("show");
+  }, 1000); // مدة الظهور ثانية
+  
+
+
+/* يظهر كل 30 ثانية */
+setInterval(showJumpscare, 30000);
+</script>
+</body>
+</html>
